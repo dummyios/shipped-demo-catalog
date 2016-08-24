@@ -12,11 +12,10 @@ import (
 	"strconv"
 	"strings"
 	"text/template"
+	"time"
 
-	_ "github.com/go-sql-driver/mysql"
+	_ "github.com/lib/pq"
 )
-
-var DB *sql.DB // Database object
 
 type CatalogType struct {
 	Items []struct {
@@ -40,13 +39,6 @@ type CatalogItems struct {
 	Items []CatalogItem `json:"items"`
 }
 
-type dbCreds struct {
-	db_schema   string
-	db_user     string
-	db_password string
-	db_host     string
-}
-
 type Response struct {
 	Status  string `json:"status"`
 	Code    int    `json:"code"`
@@ -56,14 +48,13 @@ type Response struct {
 const errors = "ERROR"
 const success = "SUCCESS"
 
+var (
+	connStr      = os.Getenv("HOST_POSTGRES_SINGLE")
+	deployTarget = os.Getenv("DEPLOY_TARGET")
+)
+
 func main() {
-
-	db, e := createDatabase()
-	if e != nil {
-		log.Printf("Error creating database: %s", e.Error())
-	}
-	DB = db
-
+	setupDB()
 	http.HandleFunc("/v1/catalog/", Catalog)
 	http.HandleFunc("/", HandleIndex)
 
@@ -84,27 +75,14 @@ func getenv(name string, dflt string) (val string) {
 	return val
 }
 
-// Set env
-func setenv(name string, val string) {
-	os.Setenv(name, val)
-}
-
-func getdbCreds() (creds *dbCreds) {
-	var x dbCreds
-
-	x.db_host = getenv("SHIPPED_MYSQL_HOST", "tcp(mysql:3306)")
-	x.db_schema = getenv("SHIPPED_MYSQL_SCHEMA", "shipped") // database name
-	x.db_user = getenv("SHIPPED_MYSQL_USER", "root")
-	x.db_password = getenv("SHIPPED_MYSQL_PASSWORD", "shipped")
-	return &x
-}
-
 // Create the shipped database if it does not exist
 // then populate the catalog table from the json defined rows
-func createDatabase() (db *sql.DB, e error) {
+func setupDB() error {
+	// Set DB
+	db, err := dbConnection()
 
-	const create_database string = `CREATE DATABASE IF NOT EXISTS %s`
-	const create_table string = "" +
+	const createDatabase string = `CREATE DATABASE IF NOT EXISTS %s`
+	const createTable string = "" +
 		`
 		CREATE TABLE IF NOT EXISTS catalog
 		(
@@ -114,106 +92,108 @@ func createDatabase() (db *sql.DB, e error) {
 		price   FLOAT NOT NULL,
 		image   VARCHAR(255)
 		)`
-	const insert_table string = `INSERT IGNORE INTO catalog (item_id, name, description, price, image) VALUES (?,?,?,?,?)`
-
-	// Initially the shipped catalog db may not exist,
-	// so connect with a database that will always exist.
-	creds := getdbCreds()
-	cxn := fmt.Sprintf("%s:%s@%s/%s", creds.db_user, creds.db_password, creds.db_host, "information_schema")
-	dbx, e := sql.Open("mysql", cxn)
-	if e != nil {
-		log.Printf("Error getting db object: %s", e.Error())
-		return db, e
-	}
-
-	// The db object does not actually connect to the database.
-	// Therefore, ping the database to ensure we can connect.
-	e = dbx.Ping()
-	if e != nil {
-		log.Printf("Error from DB.Ping 1: %s", e.Error())
-		return db, e
-	}
-
-	// Create the database
-	_, e = dbx.Exec(fmt.Sprintf(create_database, creds.db_schema))
-	if e != nil {
-		log.Printf("Error creating database: %s", e.Error())
-		return db, e
-	}
-	dbx.Close()
-
-	// Get new db object for shipped database.
-	cxn = fmt.Sprintf("%s:%s@%s/%s", creds.db_user, creds.db_password, creds.db_host, creds.db_schema)
-	dbx, e = sql.Open("mysql", cxn)
-	if e != nil {
-		log.Printf("error getting db object: %s", e.Error())
-		return db, e
-	}
-
-	// The db object does not actually connect to the database.
-	// Therefore, ping the database to ensure we can connect.
-	e = dbx.Ping()
-	if e != nil {
-		log.Printf("Error from DB.Ping 2: %s", e.Error())
-		return db, e
-	} else {
-		log.Printf("Success connecting to database:  %s:********@%s/%s", creds.db_user, creds.db_host, creds.db_schema)
-	}
+	const insertTable string = `INSERT INTO catalog(item_id,name,description,price,image) VALUES($1,$2,$3,$4,$5)`
 
 	// Create the catalog table
-	_, e = dbx.Exec(create_table)
-	if e != nil {
-		log.Printf("Error creating database: %s", e.Error())
-		return db, e
-	}
+	if err == nil {
+		log.Print("3")
 
-	// Get database rows defined as json
-	var cis CatalogItems
-	file, e := ioutil.ReadFile("./catalog.json")
-	if e != nil {
-		log.Printf("Error reading catalog json file: %s", e.Error())
-		return db, e
-	}
-	json.Unmarshal(file, &cis)
-
-	// Get a database transaction (ensures all operations use same connection)
-	tx, e := dbx.Begin()
-	if e != nil {
-		log.Printf("Error getting database transaction: %s", e.Error())
-		return db, e
-	}
-	defer tx.Rollback()
-
-	// Prepare insert command
-	stmt, e := tx.Prepare(insert_table)
-	if e != nil {
-		log.Printf("Error creating prepared statement: %s", e.Error())
-		return db, e
-	}
-	defer stmt.Close()
-
-	// Populate rows of catalog table
-	for _, item := range cis.Items {
-		_, e = stmt.Exec(item.ItemID, item.Name, item.Description, item.Price, item.Image)
-		if e != nil {
-			log.Printf("Error inserting row into catalog table: %s", e.Error())
-			return db, e
+		_, err = db.Exec(createTable)
+		if err != nil {
+			log.Printf("Error creating database: %s", err.Error())
+			return err
 		}
-	}
 
-	e = tx.Commit()
-	if e != nil {
-		log.Printf("Error during transaction commit: %s", e.Error())
-		return db, e
-	}
+		// Insert JSON Data
+		// Create the catalog table
+		_, err = db.Exec(createTable)
+		if err != nil {
+			log.Printf("Error creating database: %s", err.Error())
+			return err
+		}
 
-	stmt.Close()
-	return dbx, nil
+		// Get database rows defined as json
+		var cis CatalogItems
+		file, e := ioutil.ReadFile("./catalog.json")
+		if e != nil {
+			log.Printf("Error reading catalog json file: %s", err.Error())
+			return err
+		}
+		json.Unmarshal(file, &cis)
+
+		// Get a database transaction (ensures all operations use same connection)
+		tx, e := db.Begin()
+		if e != nil {
+			log.Printf("Error getting database transaction: %s", e.Error())
+			return err
+		}
+		defer tx.Rollback()
+
+		// Prepare insert command
+		stmt, e := tx.Prepare(insertTable)
+		if e != nil {
+			log.Printf("Error creating prepared statement: %s", e.Error())
+			return err
+		}
+		defer stmt.Close()
+
+		log.Println("TEST HERE")
+
+		// Populate rows of catalog table
+		for _, item := range cis.Items {
+			_, e = stmt.Exec(item.ItemID, item.Name, item.Description, item.Price, item.Image)
+			if e != nil {
+				log.Printf("Error inserting row into catalog table: %s", e.Error())
+				return e
+			}
+		}
+
+		err = tx.Commit()
+		if err != nil {
+			log.Printf("Error during transaction commit: %s", err.Error())
+			return err
+		}
+
+		stmt.Close()
+		return nil
+	}
+	return err
+}
+
+func dbConnection() (db *sql.DB, err error) {
+	for i := 0; i < 10; i++ {
+		if i > 0 {
+			log.Printf("DB connection attempt %d of 10 failed; retrying (%s) connect string (%s)", i, err.Error(), connStr)
+		}
+
+		//ex: "postgres://postgres:postgres@test--pgtest--pgsingle--1164ae-0.service.consul:4000/postgresDB?sslmode=disable"
+		if strings.Contains(deployTarget, "LOCAL_SANDBOX") {
+			connStr = "postgres://postgres:postgres@postgres_single:5432/postgresDB?sslmode=disable"
+		}
+		log.Printf("Current deploy target %s", deployTarget)
+		log.Println(connStr)
+		db, err = sql.Open("postgres", connStr)
+		if err = db.Ping(); err == nil {
+			if i > 0 {
+				log.Printf("Connected to database after %d attempts", i+1)
+			}
+			return
+		}
+		time.Sleep(5 * time.Second)
+	}
+	log.Fatal("Unable to connect to database after 10 attempts ")
+	return
 }
 
 // Get a single catalog row
 func getCatalogItem(item int) (ci CatalogItem, e error) {
-	e = DB.QueryRow("SELECT item_id, name, description, price, image FROM catalog WHERE item_id = ?", item).Scan(
+	db, err := dbConnection()
+	if err != nil {
+		log.Fatal(err)
+		return ci, e
+	}
+
+	e = db.QueryRow("SELECT item_id, name, description, price, image FROM catalog WHERE item_id = $1", item).Scan(
 		&ci.ItemID, &ci.Name, &ci.Description, &ci.Price, &ci.Image)
 	if e != nil {
 		log.Printf("Error reading database row for item %d: %s", item, e.Error())
@@ -224,8 +204,13 @@ func getCatalogItem(item int) (ci CatalogItem, e error) {
 
 // Get the whole catalog from the database
 func getCatalog() (cat CatalogItems, e error) {
+	db, err := dbConnection()
+	if err != nil {
+		log.Fatal(err)
+		return cat, e
+	}
 
-	rows, e := DB.Query("SELECT  item_id, name, description, price, image FROM catalog")
+	rows, e := db.Query("SELECT  item_id, name, description, price, image FROM catalog")
 	if e != nil {
 		log.Printf("Error from DB.Query: %s", e.Error())
 		return
@@ -257,7 +242,13 @@ func getCatalog() (cat CatalogItems, e error) {
 func deleteCatalogItem(item_id int) (rows int64, e error) {
 	const delete_sql = `DELETE FROM catalog WHERE item_id = ?`
 
-	res, err := DB.Exec(delete_sql, item_id)
+	db, err := dbConnection()
+	if err != nil {
+		log.Fatal(err)
+		return rows, e
+	}
+
+	res, err := db.Exec(delete_sql, item_id)
 	if err != nil {
 		log.Printf("Error deleting row %d:  %s", item_id, err.Error())
 		return 0, err
@@ -275,13 +266,19 @@ func addCatalogItem(req *http.Request) (e error) {
 	const insert_sql = `INSERT INTO catalog (item_id, name, description, price, image) VALUES (?,?,?,?,?)`
 	req.ParseForm()
 
+	db, err := dbConnection()
+	if err != nil {
+		log.Fatal(err)
+		return e
+	}
+
 	item_id := strings.Join(req.Form["item_id"], "")
 	name := strings.Join(req.Form["name"], "")
 	desc := strings.Join(req.Form["description"], "")
 	price := strings.Join(req.Form["price"], "")
 	image := strings.Join(req.Form["image"], "")
 
-	_, err := DB.Exec(insert_sql, item_id, name, desc, price, image)
+	_, err = db.Exec(insert_sql, item_id, name, desc, price, image)
 	if err != nil {
 		log.Printf("Error inserting row: %s", err.Error())
 		return err
@@ -292,6 +289,12 @@ func addCatalogItem(req *http.Request) (e error) {
 func updateCatalogItem(req *http.Request) (e error) {
 	const update_sql = `UPDATE catalog SET name=?, description=?, price=?, image=? WHERE item_id=?`
 	var ci CatalogItem
+
+	db, err := dbConnection()
+	if err != nil {
+		log.Fatal(err)
+		return e
+	}
 
 	// Get existing item so we can update the fields that changed
 	itemNumber := getItemNumber(req)
@@ -320,7 +323,7 @@ func updateCatalogItem(req *http.Request) (e error) {
 	if len(req.Form["price"]) > 0 {
 		desc = strings.Join(req.Form["price"], "")
 	}
-	_, e = DB.Exec(update_sql, name, desc, price, image, itemNumber)
+	_, e = db.Exec(update_sql, name, desc, price, image, itemNumber)
 	if e != nil {
 		log.Printf("Error updating row: %s", e.Error())
 		return e

@@ -1,0 +1,57 @@
+TRACE 2016/08/24 09:38:30.502855 logfile.go:52: Now archiving log output to /Users/nehayward/Desktop/Shop/shipped_demo_catalog/shipped-cli.log
+TRACE 2016/08/24 09:38:30.503569 config.go:100: .shipped directory already exists
+TRACE 2016/08/24 09:38:30.503831 config.go:109: Config file .shipped/shipped.ini already exists in /Users/nehayward
+TRACE 2016/08/24 09:38:30.504457 config.go:139: Using config file /Users/nehayward/.shipped/shipped.ini
+TRACE 2016/08/24 09:38:30.508249 config.go:189: Set value apiToken=EMGBuUZSAyXGQHzdsbkoRVoRKLuOMjQi in /Users/nehayward/.shipped/shipped.ini
+TRACE 2016/08/24 09:38:30.508296 main.go:185: CLI start directory is /Users/nehayward/Desktop/Shop/shipped_demo_catalog
+TRACE 2016/08/24 09:38:30.508563 config.go:139: Using config file /Users/nehayward/Desktop/Shop/shipped_demo_catalog/.shipped/shipped.ini
+TRACE 2016/08/24 09:38:30.509059 config.go:148: Also using project config file /Users/nehayward/Desktop/Shop/.shipped/shipped.ini
+TRACE 2016/08/24 09:38:30.509112 config.go:158: Also using home config file /Users/nehayward/.shipped/shipped.ini
+TRACE 2016/08/24 09:38:30.514821 utils.go:98: Console width is 187; help width is 120
+TRACE 2016/08/24 09:38:30.515484 client.go:114: GET https://api.ciscoshipped.io/users/current?api_token=EMGBuUZSAyXGQHzdsbkoRVoRKLuOMjQi
+TRACE 2016/08/24 09:38:30.964584 client.go:159: Request status code 200 (200 OK)
+TRACE 2016/08/24 09:38:30.968931 memdb.go:88: MemDB shipped.db: Opened /var/lib/Cisco/shipped/shipped.db
+TRACE 2016/08/24 09:38:30.968962 shipdb.go:97: Opened database shipped.db on behalf of user dummyios on server https://api.ciscoshipped.io
+TRACE 2016/08/24 09:38:30.968974 schema.go:89: Defined schema for multi-row table shipped.db.buildpacks with columns buildpackID, name
+TRACE 2016/08/24 09:38:30.971865 memdb.go:281: MemDB shipped.db: Updated _schema.buildpacks=0x7b225461626c65...
+TRACE 2016/08/24 09:38:30.972307 schema.go:89: Defined schema for multi-row table shipped.db.environments with columns environmentID, name
+TRACE 2016/08/24 09:38:30.972359 memdb.go:281: MemDB shipped.db: Updated _schema.environments=0x7b225461626c65...
+TRACE 2016/08/24 09:38:30.972766 schema.go:89: Defined schema for multi-row table shipped.db.ports with columns portnum, projectID, serviceID
+TRACE 2016/08/24 09:38:30.972814 memdb.go:281: MemDB shipped.db: Updated _schema.ports=0x7b225461626c65...
+TRACE 2016/08/24 09:38:30.973134 schema.go:89: Defined schema for multi-row table shipped.db.projects with columns projectID, name, serviceRepoIDs, serviceImageIDs
+TRACE 2016/08/24 09:38:30.973245 memdb.go:281: MemDB shipped.db: Updated _schema.projects=0x7b225461626c65...
+TRACE 2016/08/24 09:38:30.973583 schema.go:89: Defined schema for multi-row table shipped.db.services with columns projectID, serviceID, user, name, apiServer, portnum
+TRACE 2016/08/24 09:38:30.973633 memdb.go:281: MemDB shipped.db: Updated _schema.services=0x7b225461626c65...
+TRACE 2016/08/24 09:38:30.973957 main.go:150: Shipped-cli 1.0 b0 20160801 175047 starting with args struct { ConfigFile string; ConsoleMode bool; Debug bool; Expanded bool; FastBootstrap bool; Force bool; Full bool; Help bool; Json bool; Latest bool; LocalDocker bool; Logs bool; Logfile string; MockSDKClient bool; NoHdr bool; OutputFields string; RunAsRootOK bool; ShippedHome string; ShowIDs bool; ShowVersion bool; Server string; Token string; VM string; Watch int; ObjType string; Command string; Arguments []string }{ConfigFile:"", ConsoleMode:false, Debug:false, Expanded:true, FastBootstrap:false, Force:false, Full:false, Help:false, Json:false, Latest:false, LocalDocker:false, Logs:false, Logfile:"/Users/nehayward/Desktop/Shop/shipped_demo_catalog/shipped-cli.log", MockSDKClient:false, NoHdr:false, OutputFields:"", RunAsRootOK:false, ShippedHome:"", ShowIDs:false, ShowVersion:false, Server:"https://api.ciscoshipped.io/", Token:"EMGBuUZSAyXGQHzdsbkoRVoRKLuOMjQi", VM:"docker-compose", Watch:0, ObjType:"Local", Command:"reload", Arguments:[]string{"c66d9ac0-59d5-11e6-893a-0242ac110007"}}
+TRACE 2016/08/24 09:38:30.973980 commands.go:93: Running command(Local) subcommand(reload) args([]string{"c66d9ac0-59d5-11e6-893a-0242ac110007"}) help(false)
+TRACE 2016/08/24 09:38:30.974007 commands.go:162: objDesc.Name = "Local"
+TRACE 2016/08/24 09:38:30.974061 uuidParser.go:206: ==> Using serviceId b0cdc050-59d7-11e6-8970-0242ac110007
+TRACE 2016/08/24 09:38:30.974077 local.go:499: Starting LocalService.Reload()
+TRACE 2016/08/24 09:38:30.974943 projects.go:273: Directory  contains a .shipped directory
+TRACE 2016/08/24 09:38:30.975038 projects.go:273: Directory /Users/nehayward/Desktop/Shop contains a .shipped directory
+TRACE 2016/08/24 09:38:30.975300 client.go:114: GET https://api.ciscoshipped.io/projects/c66d9ac0-59d5-11e6-893a-0242ac110007?api_token=EMGBuUZSAyXGQHzdsbkoRVoRKLuOMjQi
+TRACE 2016/08/24 09:38:31.213440 client.go:159: Request status code 200 (200 OK)
+TRACE 2016/08/24 09:38:31.214690 config.go:139: Using config file /Users/nehayward/Desktop/Shop/.shipped/shipped.ini
+TRACE 2016/08/24 09:38:31.214772 config.go:158: Also using home config file /Users/nehayward/.shipped/shipped.ini
+TRACE 2016/08/24 09:38:31.214789 projects.go:304: Changed to project c66d9ac0-59d5-11e6-893a-0242ac110007 directory /Users/nehayward/Desktop/Shop
+TRACE 2016/08/24 09:38:31.214902 command.go:23: Executing command: docker-machine status shipped
+TRACE 2016/08/24 09:38:31.557306 compose.go:57: docker-machine shipped is running
+TRACE 2016/08/24 09:38:31.557432 command.go:23: Executing command: docker-machine status shipped
+TRACE 2016/08/24 09:38:31.690957 command.go:23: Executing command: vboxmanage controlvm shipped natpf1 docker-machine-shipped,tcp,localhost,42376,,2376
+TRACE 2016/08/24 09:38:31.729772 compose.go:172: DOCKER_CERT_PATH = /Users/nehayward/.docker/machine/machines/shipped
+TRACE 2016/08/24 09:38:31.729794 compose.go:172: DOCKER_HOST = tcp://localhost:42376
+TRACE 2016/08/24 09:38:31.729799 compose.go:172: DOCKER_MACHINE_NAME = shipped
+TRACE 2016/08/24 09:38:31.729803 compose.go:172: DOCKER_TLS_VERIFY = 1
+TRACE 2016/08/24 09:38:31.729809 compose.go:102: Docker machine environment setup complete
+TRACE 2016/08/24 09:38:31.729834 local.go:671: runDockerCommandOnService(0, c66d9ac0-59d5-11e6-893a-0242ac110007, b0cdc050-59d7-11e6-8970-0242ac110007) cmd(docker) args([stop])
+TRACE 2016/08/24 09:38:31.729879 client.go:114: GET https://api.ciscoshipped.io/projects/c66d9ac0-59d5-11e6-893a-0242ac110007/services/b0cdc050-59d7-11e6-8970-0242ac110007?api_token=EMGBuUZSAyXGQHzdsbkoRVoRKLuOMjQi
+TRACE 2016/08/24 09:38:32.094504 client.go:159: Request status code 200 (200 OK)
+TRACE 2016/08/24 09:38:32.096614 memdb.go:283: MemDB shipped.db: Updated services[b0cdc050-59d7-11e6-8970-0242ac110007].name="shipped-demo-catalog"
+TRACE 2016/08/24 09:38:32.096648 memdb.go:283: MemDB shipped.db: Updated services[b0cdc050-59d7-11e6-8970-0242ac110007].serviceID="b0cdc050-59d7-11e6-8970-0242ac110007"
+TRACE 2016/08/24 09:38:32.097218 client.go:114: GET https://api.ciscoshipped.io/projects/c66d9ac0-59d5-11e6-893a-0242ac110007?api_token=EMGBuUZSAyXGQHzdsbkoRVoRKLuOMjQi
+TRACE 2016/08/24 09:38:32.524174 client.go:159: Request status code 200 (200 OK)
+TRACE 2016/08/24 09:38:32.525169 memdb.go:283: MemDB shipped.db: Updated projects[c66d9ac0-59d5-11e6-893a-0242ac110007].name="Shop"
+TRACE 2016/08/24 09:38:32.525197 memdb.go:283: MemDB shipped.db: Updated projects[c66d9ac0-59d5-11e6-893a-0242ac110007].projectID="c66d9ac0-59d5-11e6-893a-0242ac110007"
+TRACE 2016/08/24 09:38:32.525725 local.go:696: Appending service: shop_shipped_demo_catalog_1
+2016/08/24 09:38:32.525766 local.go:702: Halt for service shipped-demo-catalog:
+TRACE 2016/08/24 09:38:32.525962 command.go:59: Executing command: docker stop shop_shipped_demo_catalog_1
