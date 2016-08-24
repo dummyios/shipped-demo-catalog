@@ -54,6 +54,13 @@ var (
 )
 
 func main() {
+	// PRINT ALL ENV
+	for _, e := range os.Environ() {
+		pair := strings.Split(e, "=")
+		log.Println(pair[0], os.Getenv(pair[0]))
+
+	}
+
 	setupDB()
 	http.HandleFunc("/v1/catalog/", Catalog)
 	http.HandleFunc("/", HandleIndex)
@@ -64,6 +71,7 @@ func main() {
 
 	log.Println("Listening on Port: " + listenPort)
 	http.ListenAndServe(fmt.Sprintf(":%s", listenPort), nil)
+
 }
 
 // Get environment variable.  Return default if not set.
@@ -405,13 +413,27 @@ func Catalog(rw http.ResponseWriter, req *http.Request) {
 					log.Printf("Error getting catalog items: %s", e.Error())
 					return
 				}
+
 				resp, err := json.MarshalIndent(cis.Items, "", "    ")
+
+				fmt.Println(resp)
+
+				s := "}"
+				resp = append(resp, s...) // use "..."
+
+				// s = `{"items": `
+				str := string(resp[:])
+				data := []string{str}
+				data = append([]string{`{"items": `}, data...) // use "..."
+
+				log.Printf("%v", data)
+
 				if err != nil {
 					log.Printf("Error marshalling returned catalog item %s", err.Error())
 					return
 				}
 				rw.WriteHeader(http.StatusOK)
-				rw.Write([]byte(resp))
+				rw.Write([]byte(data[0] + data[1]))
 				log.Printf("Succesfully sent %d catalog items", len(cis.Items))
 			}
 		}
